@@ -78,12 +78,12 @@ func Dump(s *Session) {
 			fmt.Fprintln(os.Stderr, err)
 		}
 
-        // Quick check if things are working...
+		// Quick check if things are working...
 		if len(faces) > 0 {
-            if err := OutlineFaces(s, p); err != nil {
-			    fmt.Fprintln(os.Stderr, err)
-            }
-        }
+			if err := OutlineFaces(s, p); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+			}
+		}
 	}
 	if err != nil {
 		log.Fatal(err)
@@ -153,21 +153,21 @@ type Face struct {
 	GroupUUID string `db:"groupId"`
 	ImageUUID string `db:"imageId"`
 
-	CenterX        float64 `db:"centerX"`
-	CenterY        float64 `db:"centerY"`
-	Size           float64 `db:"size"`
+	CenterX float64 `db:"centerX"`
+	CenterY float64 `db:"centerY"`
+	Size    float64 `db:"size"`
 
-	LeftEyeX       float64 `db:"leftEyeX"`
-	LeftEyeY       float64 `db:"leftEyeY"`
-	RightEyeX      float64 `db:"rightEyeX"`
-	RightEyeY      float64 `db:"rightEyeY"`
-	MouthX         float64 `db:"mouthX"`
-	MouthY         float64 `db:"mouthY"`
+	LeftEyeX  float64 `db:"leftEyeX"`
+	LeftEyeY  float64 `db:"leftEyeY"`
+	RightEyeX float64 `db:"rightEyeX"`
+	RightEyeY float64 `db:"rightEyeY"`
+	MouthX    float64 `db:"mouthX"`
+	MouthY    float64 `db:"mouthY"`
 
-	HasSmile       bool    `db:"hasSmile"`
-	IsBlurred      bool    `db:"isBlurred"`
-	IsLeftEyeClosed  bool    `db:"isLeftEyeClosed"`
-	IsRightEyeClosed bool    `db:"isRightEyeClosed"`
+	HasSmile         bool `db:"hasSmile"`
+	IsBlurred        bool `db:"isBlurred"`
+	IsLeftEyeClosed  bool `db:"isLeftEyeClosed"`
+	IsRightEyeClosed bool `db:"isRightEyeClosed"`
 }
 
 // Faces gets other instances of faces that belong to the same group.
@@ -201,16 +201,16 @@ func openDB(path string) (*sqlx.DB, error) {
 // resulting image in `out/` with the same basename as the original. Best way
 // to check how things are actually working...
 func OutlineFaces(s *Session, p *Photo) error {
-    src, err := s.Image(p)
-    if err != nil {
-        return err
-    }
-    faces, err := p.Faces(s)
-    if err != nil {
-        return err
-    }
+	src, err := s.Image(p)
+	if err != nil {
+		return err
+	}
+	faces, err := p.Faces(s)
+	if err != nil {
+		return err
+	}
 
-    // Need to create a mutable version of the image
+	// Need to create a mutable version of the image
 	r := src.Bounds()
 	dst := image.NewRGBA(r)
 	draw.Draw(dst, r, src, image.ZP, draw.Src)
@@ -222,9 +222,9 @@ func OutlineFaces(s *Session, p *Photo) error {
 
 	dx, dy := float64(r.Dx()), float64(r.Dy())
 	for _, f := range faces {
-        // Trial and error suggests f.Size is a rough radius
-        // about the center of the face. A box is close enough
-        // for validating.
+		// Trial and error suggests f.Size is a rough radius
+		// about the center of the face. A box is close enough
+		// for validating.
 		minX := (f.CenterX - f.Size) * dx
 		maxX := (f.CenterX + f.Size) * dx
 		minY := (f.CenterY - f.Size) * dy
@@ -239,7 +239,7 @@ func OutlineFaces(s *Session, p *Photo) error {
 	gc.Close()
 	gc.Stroke()
 
-    // Dump the files on disk for inspection
+	// Dump the files on disk for inspection
 	w, err := os.Create(filepath.Join("out", filepath.Base(p.Path)))
 	if err != nil {
 		return err
