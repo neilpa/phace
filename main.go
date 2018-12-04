@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/llgcode/draw2d/draw2dimg"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -215,34 +214,43 @@ func OutlineFaces(s *Session, p *Photo) error {
 	dst := image.NewRGBA(r)
 	draw.Draw(dst, r, src, image.ZP, draw.Src)
 
-	gc := draw2dimg.NewGraphicContext(dst)
-	gc.SetStrokeColor(color.RGBA{0xff, 0x00, 0x00, 0xff})
-	gc.SetLineWidth(10)
-	gc.BeginPath()
-
+	border := 10
 	dx, dy := float64(r.Dx()), float64(r.Dy())
 	for _, f := range faces {
 		// Trial and error suggests f.Size is a rough radius
 		// about the center of the face. A box is close enough
 		// for validating.
-		minX := (f.CenterX - f.Size) * dx
-		maxX := (f.CenterX + f.Size) * dx
-		minY := (f.CenterY - f.Size) * dy
-		maxY := (f.CenterY + f.Size) * dy
+		minX := int((f.CenterX - f.Size) * dx)
+		maxX := int((f.CenterX + f.Size) * dx)
+		minY := int((f.CenterY - f.Size) * dy)
+		maxY := int((f.CenterY + f.Size) * dy)
 
-		gc.MoveTo(minX, minY)
-		gc.LineTo(minX, maxY)
-		gc.LineTo(maxX, maxY)
-		gc.LineTo(maxX, minY)
-		gc.LineTo(minX, minY)
+		top := image.Rect(minX-border, minY-border, maxX+border, minY)
+		bot := image.Rect(minX-border, maxY, maxX+border, maxY+border)
+		left := image.Rect(minX-border, minY, minX, maxY)
+		right := image.Rect(maxX, minY, maxX+border, maxY)
+
+		draw.Draw(dst, top, blue, image.ZP, draw.Src)
+		draw.Draw(dst, bot, green, image.ZP, draw.Src)
+		draw.Draw(dst, left, red, image.ZP, draw.Src)
+		draw.Draw(dst, right, gray, image.ZP, draw.Src)
 	}
-	gc.Close()
-	gc.Stroke()
 
 	// Dump the files on disk for inspection
+	err = os.MkdirAll("out", 0755)
+	if err != nil {
+		return err
+	}
 	w, err := os.Create(filepath.Join("out", filepath.Base(p.Path)))
 	if err != nil {
 		return err
 	}
 	return jpeg.Encode(w, dst, nil)
 }
+
+var (
+	red   = &image.Uniform{color.RGBA{255, 0, 0, 255}}
+	green = &image.Uniform{color.RGBA{0, 255, 0, 255}}
+	blue  = &image.Uniform{color.RGBA{0, 0, 255, 255}}
+	gray  = &image.Uniform{color.RGBA{100, 100, 100, 255}}
+)
