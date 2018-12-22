@@ -67,20 +67,28 @@ func Dump(s *Session) {
 	photos, err := s.Photos()
 
 	for _, p := range photos {
-		fmt.Println(p.Path)
 		faces, err := p.Faces(s)
+		if len(faces) == 0 {
+			continue
+		}
+		if p.Orientation != 3 {
+			continue
+		}
+		fmt.Printf("%s orientation=%d type=%d adj=%t\n", p.Path, p.Orientation, p.Type, p.HasAdjustments)
 		for _, f := range faces {
 			fmt.Printf("  %s center=(%f,%f) size=%f left=(%f,%f) right=(%f,%f), mouth=(%f,%f)\n",
 				f.GroupUUID, f.CenterX, f.CenterY, f.Size, f.LeftEyeX, f.LeftEyeY, f.RightEyeX, f.RightEyeY, f.MouthX, f.MouthY)
 		}
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
+			break // TODO
 		}
 
 		// Quick check if things are working...
 		if len(faces) > 0 {
 			if err := OutlineFaces(s, p); err != nil {
 				fmt.Fprintln(os.Stderr, err)
+				break // TODO
 			}
 		}
 	}
@@ -93,7 +101,7 @@ func Dump(s *Session) {
 func (s *Session) Photos() ([]*Photo, error) {
 	photos := make([]*Photo, 0)
 	err := s.LibraryDB.Select(&photos, `
-        SELECT v.uuid, v.masterUuid, m.fingerprint, m.imagePath
+        SELECT v.uuid, v.masterUuid, m.fingerprint, m.imagePath, v.orientation, v.type, v.hasAdjustments
         FROM RKVersion v
         JOIN RKMaster m ON m.uuid = v.masterUuid
     `)
@@ -104,8 +112,6 @@ func (s *Session) Photos() ([]*Photo, error) {
 func (s *Session) Faces() ([]*Face, error) {
 	faces := make([]*Face, 0)
 	err := s.PersonDB.Select(&faces, `
-        SELECT f.uuid, fg.uuid AS groupId, f.imageId, f.centerX, f.centerY, f.size
-            f.
         SELECT f.uuid, fg.uuid AS groupId, f.imageId, f.centerX, f.centerY, f.size
         FROM RKFace f
         JOIN RKFaceGroupFace fgf ON fgf.faceId = f.modelId
@@ -129,6 +135,10 @@ type Photo struct {
 
 	Height int `db:"masterHeight"`
 	Width  int `db:"masterWidth"`
+
+	Orientation    int  `db:"orientation"`
+	Type           int  `db:"type"`
+	HasAdjustments bool `db:"hasAdjustments"`
 }
 
 // Faces gets the recognized faces in the photo.
@@ -222,8 +232,10 @@ func OutlineFaces(s *Session, p *Photo) error {
 		// for validating.
 		minX := int((f.CenterX - f.Size) * dx)
 		maxX := int((f.CenterX + f.Size) * dx)
-		minY := int((f.CenterY - f.Size) * dy)
-		maxY := int((f.CenterY + f.Size) * dy)
+		minY := int(((f.CenterY) - f.Size) * dy)
+		maxY := int(((f.CenterY) + f.Size) * dy)
+
+		//minX, minY, maxX, maxY = minY, minX, maxY, maxX
 
 		top := image.Rect(minX-border, minY-border, maxX+border, minY)
 		bot := image.Rect(minX-border, maxY, maxX+border, maxY+border)
@@ -234,6 +246,10 @@ func OutlineFaces(s *Session, p *Photo) error {
 		draw.Draw(dst, bot, green, image.ZP, draw.Src)
 		draw.Draw(dst, left, red, image.ZP, draw.Src)
 		draw.Draw(dst, right, gray, image.ZP, draw.Src)
+
+		drawDot(dst, f.LeftEyeX, f.LeftEyeY, r, p.Orientation, blue)
+		drawDot(dst, f.RightEyeX, f.RightEyeY, r, p.Orientation, red)
+		drawDot(dst, f.MouthX, f.MouthY, r, p.Orientation, green)
 	}
 
 	// Dump the files on disk for inspection
@@ -246,6 +262,30 @@ func OutlineFaces(s *Session, p *Photo) error {
 		return err
 	}
 	return jpeg.Encode(w, dst, nil)
+}
+
+func drawDot(dst draw.Image, x, y float64, bounds image.Rectangle, orientation int, c image.Image) {
+	pt := makePoint(x, y, bounds, orientation)
+	sz := 15
+	dot := image.Rect(pt.X-sz, pt.Y-sz, pt.X+sz, pt.Y+sz)
+	draw.Draw(dst, dot, c, image.ZP, draw.Src)
+}
+
+func makePoint(x, y float64, r image.Rectangle, orientation int) image.Point {
+	dx, dy := float64(r.Dx()), float64(r.Dy())
+	switch orientation {
+	case 1: // normal but not sure why the y axis is flipped
+		y = 1 - y
+	case 3: // upside down too
+		x = 1 - x
+	case 6: // portrait
+		x, y = 1-y, 1-x
+	case 8: // only 1 example with a face
+		x, y = y, x
+	default:
+		fmt.Println("unrecognized orientation:", orientation)
+	}
+	return image.Pt(int(x*dx), int(y*dy))
 }
 
 var (
