@@ -1,4 +1,4 @@
-package main
+package phace
 
 // Photo record in the library, references an image on disk.
 type Photo struct {

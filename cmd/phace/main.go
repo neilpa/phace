@@ -9,6 +9,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+
+	"neilpa.me/phace"
 )
 
 func main() {
@@ -16,7 +18,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "usage: phace <*.photoslibrary>")
 		os.Exit(2)
 	}
-	s, err := OpenSession(os.Args[1])
+	s, err := phace.OpenSession(os.Args[1])
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -24,7 +26,7 @@ func main() {
 }
 
 // Dump prints paths to image files and raw face tag data.
-func Dump(s *Session) {
+func Dump(s *phace.Session) {
 	photos, err := s.Photos()
 
 	for _, p := range photos {
@@ -53,7 +55,7 @@ func Dump(s *Session) {
 // Outilne creates a new image, drawing a boarder around the faces. Dumps the
 // resulting image in `out/` with the same basename as the original. Best way
 // to check how things are actually working...
-func OutlineFaces(s *Session, p *Photo) error {
+func OutlineFaces(s *phace.Session, p *phace.Photo) error {
 	src, err := s.Image(p)
 	if err != nil {
 		return err
