@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	// TODO Should callers be responsible for this?
 	_ "image/jpeg"
 	_ "image/png"
 
@@ -38,9 +39,14 @@ func OpenSession(path string) (*Session, error) {
 	return &Session{path, libraryDB, personDB}, nil
 }
 
+// ImagePath returns the on-disk path to the master image.
+func (s *Session) ImagePath(p *Photo) string {
+	return filepath.Join(s.Path, "Masters", p.Path)
+}
+
 // Image opens the master image file in the library.
 func (s *Session) Image(p *Photo) (image.Image, error) {
-	f, err := os.Open(filepath.Join(s.Path, "Masters", p.Path))
+	f, err := os.Open(s.ImagePath(p))
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +80,7 @@ func (s *Session) Faces() ([]*Face, error) {
 }
 
 // FaceGroups gets all the group records in the library.
-func (s *Session) FaceGroups() ([]*Face, error) {
+func (s *Session) FaceGroups() ([]*FaceGroup, error) {
 	return nil, fmt.Errorf("todo")
 }
 

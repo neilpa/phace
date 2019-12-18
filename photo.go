@@ -26,7 +26,7 @@ func (p *Photo) Faces(s *Session) ([]*Face, error) {
         FROM RKFace f
         JOIN RKFaceGroupFace fgf ON fgf.faceId = f.modelId
         JOIN RKFaceGroup fg ON fg.modelId = fgf.faceGroupId
-        WHERE imageId = ?
+        WHERE f.imageId = ?
     `, p.UUID)
 	return faces, err
 }
