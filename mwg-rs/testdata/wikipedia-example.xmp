@@ -18,7 +18,8 @@
             <mwg-rs:RegionList>
                <rdf:Bag>
                   <rdf:li rdf:parseType="Resource">
-                     <mwg-rs:Type></mwg-rs:Type>
+                     <mwg-rs:Type>Pet</mwg-rs:Type>
+                     <mwg-rs:Name>Fido</mwg-rs:Name>
                      <mwg-rs:Area rdf:parseType="Resource">
                         <stArea:x>0.680921052631579</stArea:x>
                         <stArea:y>0.3537117903930131</stArea:y>

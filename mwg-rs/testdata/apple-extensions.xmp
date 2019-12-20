@@ -1,0 +1,38 @@
+<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="XMP Core 5.4.0">
+   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+      <rdf:Description rdf:about=""
+            xmlns:mwg-rs="http://www.metadataworkinggroup.com/schemas/regions/"
+            xmlns:stArea="http://ns.adobe.com/xmp/sType/Area#"
+            xmlns:apple-fi="http://ns.apple.com/faceinfo/1.0/"
+            xmlns:stDim="http://ns.adobe.com/xap/1.0/sType/Dimensions#">
+         <mwg-rs:Regions rdf:parseType="Resource">
+            <mwg-rs:RegionList>
+               <rdf:Seq>
+                  <rdf:li rdf:parseType="Resource">
+                     <mwg-rs:Area rdf:parseType="Resource">
+                        <stArea:y>0.409000</stArea:y>
+                        <stArea:w>0.057000</stArea:w>
+                        <stArea:x>0.400500</stArea:x>
+                        <stArea:h>0.076000</stArea:h>
+                        <stArea:unit>normalized</stArea:unit>
+                     </mwg-rs:Area>
+                     <mwg-rs:Type>Face</mwg-rs:Type>
+                     <mwg-rs:Extensions rdf:parseType="Resource">
+                        <apple-fi:AngleInfoYaw>0</apple-fi:AngleInfoYaw>
+                        <apple-fi:AngleInfoRoll>270</apple-fi:AngleInfoRoll>
+                        <apple-fi:ConfidenceLevel>99</apple-fi:ConfidenceLevel>
+                        <apple-fi:Timestamp>7131836519707</apple-fi:Timestamp>
+                        <apple-fi:FaceID>5</apple-fi:FaceID>
+                     </mwg-rs:Extensions>
+                  </rdf:li>
+               </rdf:Seq>
+            </mwg-rs:RegionList>
+            <mwg-rs:AppliedToDimensions rdf:parseType="Resource">
+               <stDim:h>3024</stDim:h>
+               <stDim:w>4032</stDim:w>
+               <stDim:unit>pixel</stDim:unit>
+            </mwg-rs:AppliedToDimensions>
+         </mwg-rs:Regions>
+      </rdf:Description>
+   </rdf:RDF>
+</x:xmpmeta>

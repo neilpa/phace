@@ -7,13 +7,14 @@ import (
 )
 
 type RegionStruct struct {
-	Area         xmpbase.Area `xmp:"mwg-rs:Area"`
-	Type         RegionType   `xmp:"mwg-rs:Type"`
-	Name         string       `xmp:"mwg-rs:Name"` // TODO omit???
-	Description  string       `xmp:"mwg-rs:Description"`
-	FocusUsage   FocusUsage   `xmp:"mwg-rs:FocusUsage"`
-	BarCodeValue string       `xmp:"mwg-rs:BarCodeValue"`
-	// TODO Extensions
+	Area         xmpbase.Area  `xmp:"mwg-rs:Area"`
+	Type         RegionType    `xmp:"mwg-rs:Type"`
+	Name         string        `xmp:"mwg-rs:Name"`
+	Description  string        `xmp:"mwg-rs:Description"`
+	FocusUsage   FocusUsage    `xmp:"mwg-rs:FocusUsage"`
+	BarCodeValue string        `xmp:"mwg-rs:BarCodeValue"`
+	// TODO This is still emitted when there are no child nodes
+	Extensions   xmp.Extension `xmp:"mwg-rs:Extensions,empty"`
 }
 
 type RegionStructList []RegionStruct
