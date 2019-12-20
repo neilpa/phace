@@ -27,7 +27,7 @@ const (
 // as metadata.
 //
 // TODO Specifics and that this only works for JPEGs currently.
-func EmbedFaces(s *phace.Session, p *phace.Photo, faces []*phace.Face) error {
+func EmbedFaces(s *phace.Session, p *phace.Photo, faces []*phace.Face, dir string) error {
 	f, err := os.Open(s.ImagePath(p))
 	if err != nil {
 		return err
@@ -103,7 +103,7 @@ func EmbedFaces(s *phace.Session, p *phace.Photo, faces []*phace.Face) error {
 	fmt.Printf("segments %d head %d tail %d\n", len(segments), len(head), len(tail))
 
 	// TODO Do any of the metadata sections track the total file size?
-	path := filepath.Join("out", filepath.Base(p.Path))
+	path := filepath.Join(dir, filepath.Base(p.Path))
 	w, err := os.Create(path)
 	if err != nil {
 		return err

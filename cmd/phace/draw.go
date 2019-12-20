@@ -15,7 +15,7 @@ import (
 // OutlineFaces creates a new image, drawing a boarder around the faces.
 // Dumps the resulting image in `out/` with the same basename as the
 // original. Best way to check how things are actually working...
-func OutlineFaces(s *phace.Session, p *phace.Photo, faces []*phace.Face) error {
+func OutlineFaces(s *phace.Session, p *phace.Photo, faces []*phace.Face, dir string) error {
 	src, err := s.Image(p)
 	if err != nil {
 		return err
@@ -62,7 +62,7 @@ func OutlineFaces(s *phace.Session, p *phace.Photo, faces []*phace.Face) error {
 	if err != nil {
 		return err
 	}
-	w, err := os.Create(filepath.Join("out", filepath.Base(p.Path)))
+	w, err := os.Create(filepath.Join(dir, filepath.Base(p.Path)))
 	if err != nil {
 		return err
 	}

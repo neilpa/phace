@@ -28,6 +28,10 @@ func main() {
 		fmt.Fprintf(os.Stderr, "%s: TODO: -embed and -draw mutually exclusive\n", os.Args[0])
 		os.Exit(2)
 	}
+	if err := os.MkdirAll(*out, 0755); err != nil {
+		fmt.Fprintf(os.Stderr, "%s: %s\n", os.Args[0], err)
+		os.Exit(2)
+	}
 
 	s, err := phace.OpenSession(flag.Arg(0))
 	if err != nil {
@@ -53,9 +57,9 @@ func main() {
 
 		switch {
 		case *embed:
-			err = EmbedFaces(s, p, faces)
+			err = EmbedFaces(s, p, faces, *out)
 		case *fdraw:
-			err = OutlineFaces(s, p, faces)
+			err = OutlineFaces(s, p, faces, *out)
 		}
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%s: %s", os.Args[0], err)
