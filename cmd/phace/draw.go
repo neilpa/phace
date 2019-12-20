@@ -29,17 +29,24 @@ func OutlineFaces(s *phace.Session, p *phace.Photo, faces []*phace.Face, dir str
 	}
 
 	// Need to create a mutable version of the image
-	r := src.Bounds()
-	dst := image.NewRGBA(r)
-	draw.Draw(dst, r, src, image.ZP, draw.Src)
+	bounds := src.Bounds()
+	dst := image.NewRGBA(bounds)
+	draw.Draw(dst, bounds, src, image.ZP, draw.Src)
 
 	border := 10
 	for _, f := range faces {
-		// Trial and error suggests f.Size is a rough radius
-		// about the center of the face. A box is close enough
-		// for validating.
-		min := makePoint(f.CenterX-f.Size, f.CenterY-f.Size, r, p.Orientation)
-		max := makePoint(f.CenterX+f.Size, f.CenterY+f.Size, r, p.Orientation)
+		// Convert to pixel coords, size is aligned to smaller dimension
+		width, height := float64(bounds.Dx()), float64(bounds.Dy())
+
+		// Trial and error suggests f.Size is the radius about the center
+		// of the face. A box is close enough for validating.
+		radius := int(f.Size * width) // TODO Round?
+		if height < width {
+			radius = int(f.Size * height)
+		}
+		center := makePoint(f.CenterX, f.CenterY, bounds, p.Orientation)
+		min := image.Pt(center.X - radius, center.Y - radius)
+		max := image.Pt(center.X + radius, center.Y + radius)
 
 		top := image.Rect(min.X-border, min.Y-border, max.X+border, min.Y)
 		bot := image.Rect(min.X-border, max.Y, max.X+border, max.Y+border)
@@ -51,10 +58,10 @@ func OutlineFaces(s *phace.Session, p *phace.Photo, faces []*phace.Face, dir str
 		draw.Draw(dst, left, red, image.ZP, draw.Src)
 		draw.Draw(dst, right, gray, image.ZP, draw.Src)
 
-		drawDot(dst, f.LeftEyeX, f.LeftEyeY, r, p.Orientation, blue)
-		drawDot(dst, f.RightEyeX, f.RightEyeY, r, p.Orientation, red)
-		drawDot(dst, f.MouthX, f.MouthY, r, p.Orientation, green)
-		drawDot(dst, f.CenterX, f.CenterY, r, p.Orientation, black)
+		drawDot(dst, f.LeftEyeX, f.LeftEyeY, bounds, p.Orientation, blue)
+		drawDot(dst, f.RightEyeX, f.RightEyeY, bounds, p.Orientation, red)
+		drawDot(dst, f.MouthX, f.MouthY, bounds, p.Orientation, green)
+		drawDot(dst, f.CenterX, f.CenterY, bounds, p.Orientation, black)
 	}
 
 	// Dump the files on disk for inspection
@@ -71,7 +78,7 @@ func OutlineFaces(s *phace.Session, p *phace.Photo, faces []*phace.Face, dir str
 
 func drawDot(dst draw.Image, x, y float64, bounds image.Rectangle, orientation int, c image.Image) {
 	pt := makePoint(x, y, bounds, orientation)
-	sz := 15
+	sz := 15 // TODO Scale relative to size of face?
 	dot := image.Rect(pt.X-sz, pt.Y-sz, pt.X+sz, pt.Y+sz)
 	draw.Draw(dst, dot, c, image.ZP, draw.Src)
 }
