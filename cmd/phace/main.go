@@ -68,6 +68,9 @@ func main() {
 			switch {
 			case *embed:
 				err = EmbedFaces(s, p, faces, *out)
+				if err == nil {
+					fmt.Printf("embedded %d faces in %s\n", len(faces), p.Path)
+				}
 			case *fdraw:
 				err = OutlineFaces(s, p, faces, *out)
 				debug("outlined %s", p.Path)
