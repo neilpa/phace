@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 
 	"neilpa.me/phace"
 )
@@ -43,28 +44,40 @@ func main() {
 	}
 
 	// TODO Use more cores
+	var wg sync.WaitGroup
 	for _, p := range photos {
 		faces, err := p.Faces(s)
 		if len(faces) == 0 {
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "%s: %s\n", os.Args[0], err)
+			}
 			continue
 		}
 
-		debug("%s orientation=%d type=%d adj=%t", p.Path, p.Orientation, p.Type, p.HasAdjustments)
-		for _, f := range faces {
-			debug("%s group=%s center=(%f,%f) size=%f left=(%f,%f) right=(%f,%f), mouth=(%f,%f)", p.Path,
-				f.GroupUUID, f.CenterX, f.CenterY, f.Size, f.LeftEyeX, f.LeftEyeY, f.RightEyeX, f.RightEyeY, f.MouthX, f.MouthY)
-		}
+		wg.Add(1)
+		go func(p *phace.Photo, faces []*phace.Face) {
+			defer wg.Done()
+			var err error
 
-		switch {
-		case *embed:
-			err = EmbedFaces(s, p, faces, *out)
-		case *fdraw:
-			err = OutlineFaces(s, p, faces, *out)
-		}
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "%s: %s", os.Args[0], err)
-		}
+			debug("%s orientation=%d type=%d adj=%t", p.Path, p.Orientation, p.Type, p.HasAdjustments)
+			for _, f := range faces {
+				debug("%s group=%s center=(%f,%f) size=%f left=(%f,%f) right=(%f,%f), mouth=(%f,%f)", p.Path,
+					f.GroupUUID, f.CenterX, f.CenterY, f.Size, f.LeftEyeX, f.LeftEyeY, f.RightEyeX, f.RightEyeY, f.MouthX, f.MouthY)
+			}
+
+			switch {
+			case *embed:
+				err = EmbedFaces(s, p, faces, *out)
+			case *fdraw:
+				err = OutlineFaces(s, p, faces, *out)
+				debug("outlined %s", p.Path)
+			}
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "%s: %s\n", os.Args[0], err)
+			}
+		}(p, faces)
 	}
+	wg.Wait()
 }
 
 func debug(format string, head interface{}, tail ...interface{}) {
