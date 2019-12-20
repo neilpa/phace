@@ -128,7 +128,7 @@ func makeRegions(config image.Config, faces []*phace.Face) *mwgrs.Regions {
 			Area: xmpbase.Area{
 				X:    f.CenterX,
 				Y:    f.CenterY,
-				D:    f.Size,
+				D:    2 * f.Size,
 				Unit: "normalized",
 			},
 		}
