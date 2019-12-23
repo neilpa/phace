@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime"
 	"sync"
 
 	"neilpa.me/phace"
@@ -44,6 +45,9 @@ func main() {
 	}
 
 	var wg sync.WaitGroup
+	// Limit the number of simultaneously open files to avoid ulimit issues
+	sem := make(chan struct{}, runtime.GOMAXPROCS(0)+10)
+
 	for _, p := range photos {
 		faces, err := p.Faces(s)
 		if len(faces) == 0 {
@@ -56,6 +60,9 @@ func main() {
 		wg.Add(1)
 		go func(p *phace.Photo, faces []*phace.Face) {
 			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
 			var err error
 
 			debug("%s orientation=%d type=%d adj=%t", p.Path, p.Orientation, p.Type, p.HasAdjustments)
