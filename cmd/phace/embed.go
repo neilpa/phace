@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"neilpa.me/phace"
 	"neilpa.me/phace/mwg-rs"
@@ -18,61 +17,50 @@ import (
 	"trimmer.io/go-xmp/xmp"
 )
 
-const (
-	sigXMP         = "http://ns.adobe.com/xap/1.0/\x00"
-	sigExtendedXMP = "http://ns.adobe.com/xmp/extension/\x00"
-)
-
 // EmbedFaces creates a copy of the photo's image with facial tags embeded
 // as metadata.
 //
 // TODO Specifics and that this only works for JPEGs currently.
 func EmbedFaces(s *phace.Session, p *phace.Photo, faces []*phace.Face, dir string) error {
-	f, err := os.Open(s.ImagePath(p))
+	path := s.ImagePath(p)
+	f, err := os.Open(path)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	if faces == nil {
-		faces, err = p.Faces(s)
-		if err != nil {
-			return err
-		}
-		// TODO No Faces?
-	}
-
-	segments, err := jfif.DecodeSegments(f)
+	segmentRefs, err := jfif.DecodeMetadata(f)
 	if err != nil {
 		return err
 	}
 
-	var head, tail []jfif.Segment
+	var xmpSeg *jfif.Segment
+	var imgStart = int64(-1)
 	var doc *xmp.Document
-	for _, seg := range segments {
-		if m := seg.Marker; m != jfif.APP1 {
-			if m == jfif.SOI || (jfif.APP0 <= m && m >= jfif.APP15) {
-				head = append(head, seg)
-			} else {
-				tail = append(tail, seg)
+	for _, ref := range segmentRefs {
+		if m := ref.Marker; m != jfif.APP1 {
+			if imgStart < 0 && m != jfif.SOI && (m < jfif.APP0 || m > jfif.APP15) {
+				// First non-metadata segment related to the image
+				imgStart = ref.Offset
 			}
 			continue
 		}
-
-		if strings.HasPrefix(string(seg.Data), sigXMP) {
-			// Drop the existing XMP
-			doc = &xmp.Document{}
-			err = xmp.Unmarshal(seg.Data[len(sigXMP):], doc)
-			if err != nil {
-				return err
-			}
-		} else if strings.HasPrefix(string(seg.Data), sigExtendedXMP) {
-			// TODO: Do I need to worry about this?
-			return fmt.Errorf("TODO: Existing ExtendedXMP segment %s", p.Path)
-		} else {
-			// Save this segment
-			head = append(head, seg)
+		seg, err := ref.Load(f)
+		if err != nil {
+			return err
 		}
+		sig, payload, _ := seg.AppPayload()
+		if sig != jfif.SigXMP {
+			continue
+		}
+		if xmpSeg != nil {
+			return fmt.Errorf("%s: multiple XMP segments", path)
+		}
+		doc = &xmp.Document{}
+		if err = xmp.Unmarshal(payload, doc); err != nil {
+			return err
+		}
+		xmpSeg, doc = &seg, doc
 	}
 
 	// TODO Grab the image size while decoding segments...
@@ -85,25 +73,61 @@ func EmbedFaces(s *phace.Session, p *phace.Photo, faces []*phace.Face, dir strin
 		return err
 	}
 
-	// TODO I've seen images with a preview at the end of them. after the main image
-	// What this should do instead is only decode the metadata and then copy over
-	// everything from the SOS and beyond.
+	newpath := filepath.Join(dir, filepath.Base(p.Path))
+	w, err := os.Create(newpath)
+	if err != nil {
+		return err
+	}
+	defer w.Close()
 
+	// Some JPEG files have multiple images (e.g. a preview as a trailer
+	// image). To handle this we copy from the original, inserting the
+	// new/modified XMP data at the appropriate poinit.
+	_, err = f.Seek(0, io.SeekStart)
+	if err != nil {
+		return err
+	}
+	if xmpSeg != nil {
+		// Write the partial header and skip the original xmp segment
+		_, err = io.Copy(w, &io.LimitedReader{f, xmpSeg.Offset})
+		if err != nil {
+			return err
+		}
+		_, err = f.Seek(int64(xmpSeg.Size), io.SeekCurrent)
+	} else {
+		// Write until the first image data segment
+		if imgStart < 0 {
+			return fmt.Errorf("%s: missing image segment", path)
+		}
+		_, err = io.Copy(w, &io.LimitedReader{f, imgStart})
+	}
+	if err != nil {
+		return err
+	}
+
+	// Write the new xmp segment and remainder of the original file
+	if err = encodeFaces(w, doc, config, faces); err != nil {
+		return err
+	}
+	_, err = io.Copy(w, f)
+	return err
+}
+
+// encodeFaces writes a new XMP segment to w
+func encodeFaces(w io.Writer, doc *xmp.Document, config image.Config, faces []*phace.Face) error {
 	// Create the new XMP segment
 	var buf bytes.Buffer
-	buf.WriteString(sigXMP)
+	buf.WriteString(jfif.SigXMP)
 
 	if doc == nil {
-		// TODO Skip for now
-		return fmt.Errorf("%s: Skipping", p.Path)
 		doc = xmp.NewDocument()
-		// TODO Validate that dimensions on existing data...
 	}
 	model, err := doc.MakeModel(mwgrs.NsMwgRs)
 	if err != nil {
 		return err
 	}
 	regionsModel := model.(*mwgrs.Regions)
+	// TODO Validate that dimensions on existing data...
 
 	regionList := makeRegionList(config, faces) // TODO This is lame
 	regionsModel.Regions.RegionList = append(regionsModel.Regions.RegionList, regionList...)
@@ -114,22 +138,9 @@ func EmbedFaces(s *phace.Session, p *phace.Photo, faces []*phace.Face, dir strin
 	if err != nil {
 		return err
 	}
-	head = append(head, jfif.Segment{jfif.APP1, buf.Bytes(), -1})
 
-	// TODO Do any of the metadata sections track the total file size?
-	path := filepath.Join(dir, filepath.Base(p.Path))
-	w, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer w.Close()
-
-	// Write the SOI and APPn segments
-	if err = writeSegments(w, head); err != nil {
-		return err
-	}
-	// Write the remaining segments
-	return writeSegments(w, tail)
+	seg := jfif.NewSegment(jfif.APP1, buf.Bytes())
+	return seg.Write(w)
 }
 
 func makeRegionList(config image.Config, faces []*phace.Face) mwgrs.RegionStructList {
@@ -162,13 +173,4 @@ func makeRegionList(config image.Config, faces []*phace.Face) mwgrs.RegionStruct
 	//		RegionList: regionList,
 	//	},
 	//}
-}
-
-func writeSegments(w io.Writer, segments []jfif.Segment) error {
-	for _, seg := range segments {
-		if err := jfif.EncodeSegment(w, seg); err != nil {
-			return err
-		}
-	}
-	return nil
 }

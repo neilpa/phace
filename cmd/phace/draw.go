@@ -20,13 +20,6 @@ func OutlineFaces(s *phace.Session, p *phace.Photo, faces []*phace.Face, dir str
 	if err != nil {
 		return err
 	}
-	if faces == nil {
-		faces, err = p.Faces(s)
-		if err != nil {
-			return err
-			fmt.Fprintf(os.Stderr, "%s: %s", os.Args[0], err)
-		}
-	}
 
 	// Need to create a mutable version of the image
 	bounds := src.Bounds()

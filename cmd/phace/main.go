@@ -43,7 +43,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// TODO Use more cores
 	var wg sync.WaitGroup
 	for _, p := range photos {
 		faces, err := p.Faces(s)
