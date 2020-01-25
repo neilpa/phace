@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"image/png"
 	"log"
 	"net/http"
@@ -64,7 +65,7 @@ func (s *server) rootHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "404 not found", 404)
 		return
 	}
-	if err := rootHtml.Execute(w, s.pages); err != nil {
+	if err := rootHtml().Execute(w, s.pages); err != nil {
 		fmt.Println(err)
 		http.Error(w, err.Error(), 500)
 		return
@@ -80,7 +81,7 @@ func (s *server) photosHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "404 not found", 404)
 		return
 	}
-	if err := photoHtml.Execute(w, page); err != nil {
+	if err := photoHtml().Execute(w, page); err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
@@ -109,3 +110,20 @@ func (s *server) overlayHandler(w http.ResponseWriter, r *http.Request) {
 func photoUrl(photo *phace.Photo) string {
 	return "/photos/" + url.PathEscape(photo.UUID)
 }
+
+type photoPage struct {
+	URL string
+	Photo *phace.Photo
+	Prev, Next string
+}
+
+//var photoHtml = template.Must(template.ParseFiles("photo.gohtml"))
+func photoHtml() *template.Template {
+	return template.Must(template.ParseFiles("photo.gohtml"))
+}
+
+//var rootHtml = template.Must(template.ParseFiles("root.gohtml"))
+func rootHtml() *template.Template {
+	return template.Must(template.ParseFiles("root.gohtml"))
+}
+
