@@ -1,12 +1,17 @@
 package phace
 
+import (
+	"path/filepath"
+)
+
 // Photo record in the library, references an image on disk.
 type Photo struct {
 	UUID        string `db:"uuid"`
 	MasterUUID  string `db:"masterUuid"`
 	Fingerprint string `db:"fingerprint"`
-	// Path to the image on disk, relative to the library root.
-	Path string `db:"imagePath"`
+
+	// MasterPath is the path on-disk rooted from <*.photoslibrary>/Masters/
+	MasterPath string `db:"imagePath"`
 
 	ImageDate NSDate `db:"imageDate"`
 
@@ -16,6 +21,11 @@ type Photo struct {
 	Orientation    int  `db:"orientation"`
 	Type           int  `db:"type"`
 	HasAdjustments bool `db:"hasAdjustments"`
+}
+
+// ImagePath is the path on-disk rooted from <*.photoslibrary>/,
+func (p *Photo) ImagePath() string {
+	return filepath.Join("Masters", p.MasterPath)
 }
 
 // Faces gets the recognized faces in the photo.

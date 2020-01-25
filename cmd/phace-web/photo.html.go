@@ -2,16 +2,18 @@ package main
 
 import (
 	"html/template"
+
+	"neilpa.me/phace"
 )
 
-// TODO Fix orientation
 type photoPage struct {
-	ImageUrl   string
+	URL string
+	Photo *phace.Photo
 	Prev, Next string
 }
 
 var photoHtml = template.Must(template.New("photo").Parse(
-	`<!doctype html>
+`<!doctype html>
 <html>
 <head>
   <style>
@@ -20,16 +22,42 @@ var photoHtml = template.Must(template.New("photo").Parse(
       height: 100%; // https://stackoverflow.com/a/18745921
       margin: 0;
       padding: 0;
+	  overflow: hidden; // avoid vertical scrollbar on firefox
     }
     img { // https://stackoverflow.com/a/30794589
       width: 100%;
       height: 100%;
       object-fit: contain;
+      // TODO sadly only works on firefox
+	  image-orientation: from-image;
     }
+    // TODO these end up cropping the image depending on rotation
+    // may resort to rotating the image on the service
+    //img.orient2 {
+    //  transform: rotateY(180deg);
+    //}
+    //img.orient3 {
+    //  transform: rotate(180deg);
+    //}
+    //img.orient4 {
+    //  transform: 'rotate(180deg) rotateY(180deg);
+    //}
+    //img.orient5 {
+    //  transform: rotate(270deg) rotateY(180deg);
+    //}
+    //img.orient6 {
+    //  transform: rotate(90deg);
+    //}
+    //img.orient7 {
+    //  transform: rotate(90deg) rotateY(180deg);
+    //}
+    //img.orient8 {
+    //  transform: rotate(270deg);
+    //}
   </style>
 </head>
 <body>
-  <img style='width:100%;height:100%;object-fit:contain' src='{{ .ImageUrl }}'/>
+  <img class='orient{{ .Photo.Orientation }}' src='/{{ .Photo.ImagePath }}'/>
 </body>
 <script>
   document.addEventListener('keydown', function(e) {

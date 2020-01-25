@@ -42,13 +42,7 @@ func OpenSession(path string) (*Session, error) {
 // ImagePath returns the on-disk path to the master image, including the
 // root directory of the *.photoslibrary.
 func (s *Session) ImagePath(p *Photo) string {
-	return filepath.Join(s.Path, s.MasterPath(p))
-}
-
-// MasterPath returns the on-disk path to the master image, excluding the
-// root directory of the *.photoslibrary.
-func (s *Session) MasterPath(p *Photo) string {
-	return filepath.Join("Masters", p.Path)
+	return filepath.Join(s.Path, p.ImagePath())
 }
 
 // Image opens the master image file in the library.

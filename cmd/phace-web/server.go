@@ -12,7 +12,6 @@ import (
 
 type server struct {
 	session *phace.Session
-	photos  []*phace.Photo
 
 	// pages is the list of photo pages by date
 	pages []*photoPage
@@ -40,7 +39,10 @@ func newServer(photoslibrary string) (*server, error) {
 	pages := make([]*photoPage, len(photos))
 	index := make(map[string]*photoPage, len(photos))
 	for i, p := range photos {
-		page := &photoPage{ImageUrl: imageUrl(session, p)}
+		page := &photoPage{
+			URL: photoUrl(p),
+			Photo: p,
+		}
 		if i > 0 {
 			page.Prev = photoUrl(photos[i-1])
 		}
@@ -51,7 +53,7 @@ func newServer(photoslibrary string) (*server, error) {
 		index[p.UUID] = page
 	}
 
-	return &server{session, photos, pages, index}, nil
+	return &server{session, pages, index}, nil
 }
 
 func (s *server) rootHandler(w http.ResponseWriter, r *http.Request) {
@@ -61,12 +63,11 @@ func (s *server) rootHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "404 not found", 404)
 		return
 	}
-	// TODO: Use a template as well with a better UX
-	fmt.Fprintln(w, "<html><ul>")
-	for _, p := range s.photos {
-		fmt.Fprintf(w, "<li><a href='%s'>%s</a></li>", photoUrl(p), p.ImageDate)
+	if err := rootHtml.Execute(w, s.pages); err != nil {
+		fmt.Println(err)
+		http.Error(w, err.Error(), 500)
+		return
 	}
-	fmt.Fprintln(w, `</ul></html>`)
 }
 
 func (s *server) photosHandler(w http.ResponseWriter, r *http.Request) {
@@ -86,8 +87,4 @@ func (s *server) photosHandler(w http.ResponseWriter, r *http.Request) {
 
 func photoUrl(photo *phace.Photo) string {
 	return "/photos/" + url.PathEscape(photo.UUID)
-}
-
-func imageUrl(session *phace.Session, photo *phace.Photo) string {
-	return "/images/" + session.MasterPath(photo)
 }

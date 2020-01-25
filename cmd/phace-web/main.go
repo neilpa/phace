@@ -28,9 +28,9 @@ func main() {
 	http.HandleFunc("/", s.rootHandler)
 	http.Handle("/photos/", http.StripPrefix("/photos/", http.HandlerFunc(s.photosHandler)))
 
-	// TODO Handle references to on-disk images better
 	fs := http.FileServer(http.Dir(library))
-	http.Handle("/images/", http.StripPrefix("/images/", fs))
+	http.Handle("/masters/", fs)
+	http.Handle("/Masters/", fs) // since fs is case-sensitive
 
 	log.Printf("listening on %q\n", *addr)
 	log.Fatal(http.ListenAndServe(*addr, nil))
