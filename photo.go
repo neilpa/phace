@@ -8,6 +8,8 @@ type Photo struct {
 	// Path to the image on disk, relative to the library root.
 	Path string `db:"imagePath"`
 
+	ImageDate NSDate `db:"imageDate"`
+
 	Height int `db:"masterHeight"`
 	Width  int `db:"masterWidth"`
 

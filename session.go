@@ -39,9 +39,16 @@ func OpenSession(path string) (*Session, error) {
 	return &Session{path, libraryDB, personDB}, nil
 }
 
-// ImagePath returns the on-disk path to the master image.
+// ImagePath returns the on-disk path to the master image, including the
+// root directory of the *.photoslibrary.
 func (s *Session) ImagePath(p *Photo) string {
-	return filepath.Join(s.Path, "Masters", p.Path)
+	return filepath.Join(s.Path, s.MasterPath(p))
+}
+
+// MasterPath returns the on-disk path to the master image, excluding the
+// root directory of the *.photoslibrary.
+func (s *Session) MasterPath(p *Photo) string {
+	return filepath.Join("Masters", p.Path)
 }
 
 // Image opens the master image file in the library.
@@ -60,7 +67,7 @@ func (s *Session) Image(p *Photo) (image.Image, error) {
 func (s *Session) Photos() ([]*Photo, error) {
 	photos := make([]*Photo, 0)
 	err := s.LibraryDB.Select(&photos, `
-        SELECT v.uuid, v.masterUuid, m.fingerprint, m.imagePath, v.orientation, v.type, v.hasAdjustments
+        SELECT v.uuid, v.masterUuid, m.fingerprint, m.imagePath, v.orientation, v.type, v.hasAdjustments, m.imageDate
         FROM RKVersion v
         JOIN RKMaster m ON m.uuid = v.masterUuid
     `)
