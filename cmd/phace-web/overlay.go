@@ -5,26 +5,17 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
-	"image/jpeg"
-	"os"
-	"path/filepath"
 
 	"neilpa.me/phace"
 )
 
-// OutlineFaces creates a new image, drawing a border around the faces.
-// Dumps the resulting image in `out/` with the same basename as the
-// original. Best way to check how things are actually working...
-func OutlineFaces(s *phace.Session, p *phace.Photo, faces []*phace.Face, dir string) error {
-	src, err := s.Image(p)
-	if err != nil {
-		return err
-	}
-
+// Oultilnes produces a transparent image with rectangles where the
+// faces should be.
+func Outlines(photo *phace.Photo, faces []*phace.Face) *image.RGBA {
 	// Need to create a mutable version of the image
-	bounds := src.Bounds()
+	bounds := image.Rect(0, 0, photo.Width, photo.Height)
 	dst := image.NewRGBA(bounds)
-	draw.Draw(dst, bounds, src, image.ZP, draw.Src)
+	fmt.Println("faces", len(faces))
 
 	border := 10
 	for _, f := range faces {
@@ -37,7 +28,7 @@ func OutlineFaces(s *phace.Session, p *phace.Photo, faces []*phace.Face, dir str
 		if height < width {
 			radius = int(f.Size * height)
 		}
-		center := makePoint(f.CenterX, f.CenterY, bounds, p.Orientation)
+		center := makePoint(f.CenterX, f.CenterY, bounds, photo.Orientation)
 		min := image.Pt(center.X - radius, center.Y - radius)
 		max := image.Pt(center.X + radius, center.Y + radius)
 
@@ -51,22 +42,13 @@ func OutlineFaces(s *phace.Session, p *phace.Photo, faces []*phace.Face, dir str
 		draw.Draw(dst, left, red, image.ZP, draw.Src)
 		draw.Draw(dst, right, gray, image.ZP, draw.Src)
 
-		drawDot(dst, f.LeftEyeX, f.LeftEyeY, bounds, p.Orientation, blue)
-		drawDot(dst, f.RightEyeX, f.RightEyeY, bounds, p.Orientation, red)
-		drawDot(dst, f.MouthX, f.MouthY, bounds, p.Orientation, green)
-		drawDot(dst, f.CenterX, f.CenterY, bounds, p.Orientation, black)
+		drawDot(dst, f.LeftEyeX, f.LeftEyeY, bounds, photo.Orientation, blue)
+		drawDot(dst, f.RightEyeX, f.RightEyeY, bounds, photo.Orientation, red)
+		drawDot(dst, f.MouthX, f.MouthY, bounds, photo.Orientation, green)
+		drawDot(dst, f.CenterX, f.CenterY, bounds, photo.Orientation, black)
 	}
 
-	// Dump the files on disk for inspection
-	err = os.MkdirAll("out", 0755)
-	if err != nil {
-		return err
-	}
-	w, err := os.Create(filepath.Join(dir, filepath.Base(p.Path)))
-	if err != nil {
-		return err
-	}
-	return jpeg.Encode(w, dst, nil)
+	return dst
 }
 
 func drawDot(dst draw.Image, x, y float64, bounds image.Rectangle, orientation int, c image.Image) {

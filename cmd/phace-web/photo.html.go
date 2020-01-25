@@ -24,12 +24,16 @@ var photoHtml = template.Must(template.New("photo").Parse(
       padding: 0;
 	  overflow: hidden; // avoid vertical scrollbar on firefox
     }
-    img { // https://stackoverflow.com/a/30794589
+    body {
+	  position: relative;
+    }
+    img, div { // https://stackoverflow.com/a/30794589
       width: 100%;
       height: 100%;
       object-fit: contain;
       // TODO sadly only works on firefox
-	  image-orientation: from-image;
+	  //image-orientation: from-image;
+	  position: absolute;
     }
     // TODO these end up cropping the image depending on rotation
     // may resort to rotating the image on the service
@@ -58,6 +62,8 @@ var photoHtml = template.Must(template.New("photo").Parse(
 </head>
 <body>
   <img class='orient{{ .Photo.Orientation }}' src='/{{ .Photo.ImagePath }}'/>
+  <img class='orient{{ .Photo.Orientation }}' src='/overlay/{{ .Photo.UUID }}'/>
+  <div>some text</div>
 </body>
 <script>
   document.addEventListener('keydown', function(e) {

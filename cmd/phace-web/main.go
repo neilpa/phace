@@ -27,6 +27,7 @@ func main() {
 	}
 	http.HandleFunc("/", s.rootHandler)
 	http.Handle("/photos/", http.StripPrefix("/photos/", http.HandlerFunc(s.photosHandler)))
+	http.Handle("/overlay/", http.StripPrefix("/overlay/", http.HandlerFunc(s.overlayHandler)))
 
 	fs := http.FileServer(http.Dir(library))
 	http.Handle("/masters/", fs)

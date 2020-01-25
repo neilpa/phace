@@ -61,7 +61,7 @@ func (s *Session) Image(p *Photo) (image.Image, error) {
 func (s *Session) Photos() ([]*Photo, error) {
 	photos := make([]*Photo, 0)
 	err := s.LibraryDB.Select(&photos, `
-        SELECT v.uuid, v.masterUuid, m.fingerprint, m.imagePath, v.orientation, v.type, v.hasAdjustments, m.imageDate
+        SELECT v.uuid, v.masterUuid, m.fingerprint, m.imagePath, v.orientation, v.type, v.hasAdjustments, m.imageDate, v.masterWidth, v.masterHeight
         FROM RKVersion v
         JOIN RKMaster m ON m.uuid = v.masterUuid
     `)

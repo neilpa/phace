@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"image/png"
 	"log"
 	"net/http"
 	"net/url"
@@ -83,6 +84,26 @@ func (s *server) photosHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
+}
+
+func (s *server) overlayHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.URL)
+
+	uuid := r.URL.Path
+	page, ok := s.index[uuid]
+	if !ok {
+		http.Error(w, "404 not found", 404)
+		return
+	}
+
+	faces, err := page.Photo.Faces(s.session)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	img := Outlines(page.Photo, faces)
+	png.Encode(w, img)
 }
 
 func photoUrl(photo *phace.Photo) string {
