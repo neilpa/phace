@@ -14,3 +14,9 @@ golang.org/x/net v0.0.0-20180724234803-3673e40ba225/go.mod h1:mL1N/T3taQHkDXs73r
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 google.golang.org/appengine v1.3.0 h1:FBSsiFRMz3LBeXIomRnVzrQwSDj4ibvcRexLG0LZGQk=
 google.golang.org/appengine v1.3.0/go.mod h1:xpcJRLb0r/rnEns0DIKYYv+WjYCduHsrkT7/EB5XEv4=
+neilpa.me/go-jfif v0.5.0 h1:MNx8t0K4ysVKywCb5O98FhN3CcYih7rAUpCehj5HgtQ=
+neilpa.me/go-jfif v0.5.0/go.mod h1:EbYXM1sxsAfbRgty+I5j1Ommm6WTsLKT+KXNgC998d0=
+neilpa.me/go-x v0.2.0 h1:GbLRDtAZ9MgVrwrIe3jWnHF2W40LCFA9Ng/aDbd9GVs=
+neilpa.me/go-x v0.2.0/go.mod h1:aIemU+pQYLLV3dygXotHKF7SantXe5HzZR6VIjzY/4g=
+trimmer.io/go-xmp v0.0.0-20181216222714-4f6a2fb384a3 h1:Eoi62HBpULakI5UOxj198gFRK4J4GFNEVekzHY4eKGs=
+trimmer.io/go-xmp v0.0.0-20181216222714-4f6a2fb384a3/go.mod h1:SMaHrR8/c7YtKZ2zt8r9n93tJjQQOGAagAewi9axCj4=
