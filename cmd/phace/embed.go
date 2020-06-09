@@ -12,6 +12,7 @@ import (
 	"neilpa.me/phace/mwg-rs"
 
 	"neilpa.me/go-jfif"
+	"neilpa.me/go-x/io"
 	"trimmer.io/go-xmp/models/xmp_base"
 	//"trimmer.io/go-xmp/models/xmp_tpg"
 	"trimmer.io/go-xmp/xmp"
@@ -29,7 +30,9 @@ func EmbedFaces(s *phace.Session, p *phace.Photo, faces []*phace.Face, dir strin
 	}
 	defer f.Close()
 
-	segmentRefs, err := jfif.DecodeMetadata(f)
+	// TODO Add a new XMP segment if one does not exist
+	//		Otherwise create an XMP extended segment with the new data
+	segs, err := jfif.ScanSegments(f)
 	if err != nil {
 		return err
 	}
@@ -37,17 +40,13 @@ func EmbedFaces(s *phace.Session, p *phace.Photo, faces []*phace.Face, dir strin
 	var xmpSeg *jfif.Segment
 	var imgStart = int64(-1)
 	var doc *xmp.Document
-	for _, ref := range segmentRefs {
-		if m := ref.Marker; m != jfif.APP1 {
+	for _, seg := range segs {
+		if m := seg.Marker; m != jfif.APP1 {
 			if imgStart < 0 && m != jfif.SOI && (m < jfif.APP0 || m > jfif.APP15) {
 				// First non-metadata segment related to the image
-				imgStart = ref.Offset
+				imgStart = seg.Offset
 			}
 			continue
-		}
-		seg, err := ref.Load(f)
-		if err != nil {
-			return err
 		}
 		sig, payload, _ := seg.AppPayload()
 		if sig != jfif.SigXMP {
@@ -79,6 +78,8 @@ func EmbedFaces(s *phace.Session, p *phace.Photo, faces []*phace.Face, dir strin
 		return err
 	}
 	defer w.Close()
+
+	// TODO Switch to the jfif.File interface
 
 	// Some JPEG files have multiple images (e.g. a preview as a trailer
 	// image). To handle this we copy from the original, inserting the
