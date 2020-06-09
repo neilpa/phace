@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>hostname</key>
+	<string>Neils-MBP</string>
+	<key>hostuuid</key>
+	<string>63A78955-3640-5093-8AF6-F188EB3671E9</string>
+	<key>pid</key>
+	<integer>45816</integer>
+	<key>processname</key>
+	<string>photolibraryd</string>
+	<key>uid</key>
+	<integer>504</integer>
+</dict>
+</plist>
